@@ -1,26 +1,36 @@
-import { VocabularyService } from "./Vocabulary.service";
 import { Injectable } from "@angular/core";
-import { Platform } from "ionic-angular";
+
 /**
  * This service is responsible for String Formatting
  */
 
-const CORRECT_PREFIX: String = " <span style=\"color: chartreuse\">";
-const INCORRECT_PREFIX: String = "<span style=\"color: red\">";
+const CORRECT_PREFIX: String = " <span style=\"color: #50D2C2\">";
+const INCORRECT_PREFIX: String = "<span style=\"color: #FF3366\">";
 const SUFFIX: String = "</span>"
+const IPA_SLASH: string = "<span style=\"color: #96BCBF \"> / </span>";
 
 @Injectable()
 export class StringFormatterService {
+  // Save stat of each word in twister
   private wordsArrayStat: {
     text: string,
     correct: boolean,
     ipa: string
   }[] = [];
 
+  // Request format
+  private targetRequest: {
+    text: string,
+    ipa: string
+  };
+
+  // Response
   private formattedResponse: {
     wordString: string,
-    ipaString: string
+    ipaString: string,
+    correctPercentage: number
   }
+
 
   private splitTargetString: any;
   private splitInputString: any;
@@ -28,79 +38,75 @@ export class StringFormatterService {
   private formattedResult: string;
   private formattedIPAResult: string;
 
-  constructor(private vocabularyService: VocabularyService,  private platform: Platform) {
+  private numberOfCorrectWord: number = 0;
+  constructor() {
 
   }
 
-  public checkPlatform() {
-    this.vocabularyService.returnIPAOfString('hello world');
-    }
-  
-
-
-  public returnFormattedAnswer(target: string, input: string): Promise<any> {
+  public returnFormattedAnswer(targetRequest: any, input: string): Promise<any> {
+    // reset all previous data
+    this.targetRequest = targetRequest;
+    this.targetRequest.text = this.targetRequest.text.replace(/[,.]/g, "");
+    this.numberOfCorrectWord = 0;
     this.formattedResult = " ";
     this.formattedIPAResult = " ";
     this.formattedResponse = {
       wordString: "",
-      ipaString: ""
+      ipaString: "",
+      correctPercentage: 0
     };
 
-    this.pushWordsToWordsArrayStat(target);
+    this.pushWordsToWordsArrayStat(this.targetRequest);
     this.detectErrorInTargetFromInput(input);
 
-    return new Promise((resolve) => {
-      this.updateIPAofWordInWordsArrayStat(target).then((wordsArrayStat) => {
-        for (let word of this.wordsArrayStat) {
-          let formattedWord: string = "";
-          let formattedWordIPA: string = "";
-          if (word.correct == true) {
-            formattedWord = CORRECT_PREFIX + word.text + " " + SUFFIX;
-            formattedWordIPA = CORRECT_PREFIX + word.ipa + " " + SUFFIX;
-          }
-          else {
-            formattedWord = INCORRECT_PREFIX + word.text + " " + SUFFIX;
-            formattedWordIPA = INCORRECT_PREFIX + word.ipa + " " + SUFFIX;
-          }
-          this.formattedResult = this.formattedResult.concat(formattedWord);
-          this.formattedIPAResult = this.formattedIPAResult.concat(formattedWordIPA);
+    return new Promise((resolve, reject) => {
+      // add slash to the beginning of string
+      this.formattedResponse.ipaString = this.formattedResponse.ipaString.concat(IPA_SLASH);
+
+      this.wordsArrayStat.map((word) => {
+        let formattedWord: string = "";
+        let formattedWordIPA: string = "";
+        if (word.correct == true) {
+          formattedWord = CORRECT_PREFIX + word.text + " " + SUFFIX;
+          formattedWordIPA = CORRECT_PREFIX + word.ipa + " " + SUFFIX;
+          this.numberOfCorrectWord++;
         }
+        else {
+          formattedWord = INCORRECT_PREFIX + word.text + " " + SUFFIX;
+          formattedWordIPA = INCORRECT_PREFIX + word.ipa + " " + SUFFIX;
+        }
+        this.formattedResult = this.formattedResult.concat(formattedWord);
+        this.formattedResponse.ipaString = this.formattedResponse.ipaString.concat(formattedWordIPA);
+        this.formattedResponse.correctPercentage = Math.round((this.numberOfCorrectWord / this.splitTargetString.length * 100) * 100) / 100;
         this.formattedResponse.wordString = this.formattedResult;
-        this.formattedResponse.ipaString = this.formattedIPAResult;
-        resolve(this.formattedResponse);
-      })
-    });
-  }
-
-  private updateIPAofWordInWordsArrayStat(target: string): Promise<any> {
-    return new Promise((resolve) => {
-      this.vocabularyService.returnIPAOfString(target).then((IPAString: string) => {
-        this.splitIPAString = IPAString.split(" ");
-        for (let i = 0; i < this.splitTargetString.length; i++) {
-          this.wordsArrayStat[i].ipa = this.splitIPAString[i];
-        }
-        resolve(this.wordsArrayStat);
       });
-    });
+      this.formattedResponse.ipaString = this.formattedResponse.ipaString.concat(IPA_SLASH);
+      resolve(this.formattedResponse);
+    })
   }
 
-  private pushWordsToWordsArrayStat(target: String): void {
+  private pushWordsToWordsArrayStat(targetRequest: any): void {
     this.wordsArrayStat = [];
-    this.splitTargetString = target.split(" ");
-    for (let word of this.splitTargetString) {
+    this.splitTargetString = targetRequest.text.split(" ");
+    this.splitIPAString = targetRequest.ipa.split(" ");
+
+    this.splitTargetString.map((word, index) => {
+      let ipa = this.splitIPAString[index];
       this.wordsArrayStat.push({
         text: word,
         correct: false,
-        ipa: undefined
+        ipa: ipa
       });
-    }
+    });
   }
+
+
 
   private detectErrorInTargetFromInput(input: String): void {
     this.splitInputString = input.split(" ");
     for (let comparedWord of this.splitInputString) {
       this.wordsArrayStat.map(function (word) {
-        if (word.text == comparedWord)
+        if (word.text.toLowerCase() == comparedWord.toLowerCase())
           word.correct = true;
       });
     }

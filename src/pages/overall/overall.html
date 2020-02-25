@@ -1,47 +1,64 @@
-<ion-content style="background-image: url('http://materialdesignblog.com/wp-content/uploads/2016/06/image3.jpg')">
-  <ion-grid>
+<ion-content>
+  <ion-grid no-padding>
     <ion-row class="content">
-      <!--<ion-card>
-        <ion-card-content>-->
-          <ion-grid>
-            <ion-row>
-              <ion-col text-center class="header">
-                <p>Overall Score</p>
-                <p>Cyclone Realm</p>
-              </ion-col>
-            </ion-row>
-            <ion-row>
-              <ion-col text-center class="body">
-                <p>Twister Pass: 7</p>
-                <p>Total Attempts: 20</p>
-                <p>Average Accuracy: 76%</p>
-              </ion-col>
-            </ion-row>
-            <ion-row>
-              <ion-col text-center class="footer">
-                <p> Nicely Done!</p>
-              </ion-col>
-            </ion-row>
-          </ion-grid>
-        <!--</ion-card-content>
-      </ion-card>-->
+      <ion-grid no-padding>
+        <ion-row class="header" [ngStyle]="{'background': 'linear-gradient(to bottom, rgba(0, 0, 0, 0.49), rgba(31, 29, 29, 0.39)),       url('+ resolveBackground(selectedMode) + ') round'}">
+          <ion-col text-center>
+            <div class="rate-txt" [ngStyle]="{'color': userRate.color}">{{userRate.text}}</div>
+          </ion-col>
+        </ion-row>
+        <ion-row class="footer">
+          <ion-col col-4 class="pass">
+            <!--passed twisters-->
+            <ion-icon name="ios-checkmark-circle-outline"></ion-icon>
+            <p>{{conqueredTwisters}}</p>
+          </ion-col>
+          <ion-col col-4 class="fail">
+            <!--summary accuracy-->
+            <ion-icon name="ios-close-circle-outline"></ion-icon>
+            <p>{{failedTwisters}}</p>
+          </ion-col>
+          <ion-col col-4 class="accuracy">
+            <!--summary accuracy-->
+            <ion-icon name="ios-speedometer-outline"></ion-icon>
+            <p>{{averageUserCorrectionPercentage}}</p>
+          </ion-col>
+        </ion-row>
+      </ion-grid>
     </ion-row>
     <ion-row class="actions">
-      <ion-col col-4 align-self-end text-left class="left-options">
-        <button class="btn-circle" ion-button icon-only round mode="md" color="transparent">
-          <ion-icon name="home"></ion-icon>
-        </button>
-      </ion-col>
+      <ion-col col-12>
 
-      <ion-col col-4 align-self-end text-center class="center-options">
-        <button class="btn-circle" ion-button icon-only round mode="md" color="transparent">
-          <ion-icon name="refresh"></ion-icon>
-        </button>
+        <ion-scroll scrollY="true" style="height: 100%;" class="scroll-content">
+          <div *ngFor="let stat of userStatistics">
+            <ion-grid>
+              <ion-row>
+                <ion-col col-1 class="col-square">
+                  <div class="square" [ngStyle]="{'background-color': resolveColor(stat.correctPercentage) }"></div>
+                </ion-col>
+                <ion-col col-11 class="twister-sentence">
+                  <p>{{stat.twisterText}}</p>
+                  <div class="info">
+                    <div class="accuracy-info">
+                      <ion-icon name="ios-speedometer-outline"></ion-icon>
+                      <label>{{stat.correctPercentage}}%</label>
+                    </div>
+                    <div class="attemps-info">
+                      <ion-icon name="ios-clock-outline"></ion-icon>
+                      <label>{{stat.attempts_taken}} times</label>
+                    </div>
+                  </div>
+                </ion-col>
+              </ion-row>
+            </ion-grid>
+          </div>
+        </ion-scroll>
       </ion-col>
-
-      <ion-col col-4 align-self-end text-right class="right-options">
-        <button class="btn-circle" ion-button icon-only round mode="md" color="transparent">
-          <ion-icon name="list"></ion-icon>
+    </ion-row>
+    <ion-row>
+      <ion-col col-12>
+        <button ion-button full color="primary" class="btn-playagain" (click)="next()">
+          Next
         </button>
       </ion-col>
     </ion-row>
